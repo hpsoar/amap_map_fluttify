@@ -8,8 +8,14 @@ import android.content.Context;
 import android.view.View;
 import android.util.Log;
 
+import com.amap.api.maps.model.TileOverlayOptions;
+import com.amap.api.maps.model.UrlTileProvider;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Random;
 
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
@@ -275,6 +281,9 @@ class MapViewFactory extends PlatformViewFactory {
         com.amap.api.maps.AMapOptions var2 = (com.amap.api.maps.AMapOptions) getHEAP().get((int) args.get("var2"));
 
         com.amap.api.maps.MapView view = new com.amap.api.maps.MapView(registrar.activity(), var2);
+
+        addCustomTileProvider(view);
+
         getHEAP().put(id, view);
         return new PlatformView() {
 
@@ -287,5 +296,32 @@ class MapViewFactory extends PlatformViewFactory {
             @Override
             public void dispose() {}
         };
+    }
+
+
+    private void addCustomTileProvider(com.amap.api.maps.MapView mapView) {
+        UrlTileProvider tileProvider = new UrlTileProvider(256, 256) {
+
+            @Override
+            public URL getTileUrl(int x, int y, int zoom) {
+                try {
+                    Random random = new Random();
+                    String s = String.format("https://mt"+random.nextInt(3)+".google.cn/vt/lyrs=m@142&hl=zh-CN&gl=cn&x=%d&y=%d&z=%d&s=Galil",x,y,zoom);
+                    return new URL(s);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+
+
+
+        mapView.getMap().addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider)
+                .diskCacheEnabled(true)
+                .diskCacheDir("/storage/emulated/0/hata_realestate/cache")
+                .diskCacheSize(100000)
+                .memoryCacheEnabled(true)
+                .memCacheSize(100000));
     }
 }

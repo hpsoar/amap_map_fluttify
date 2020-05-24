@@ -49,8 +49,22 @@ typedef void (^Handler)(NSObject <FlutterPluginRegistrar> *, NSDictionary<NSStri
   return self;
 }
 
+- (void)setupCustomTile:(MAMapView *)mapView {
+//    apple_maps_flutter
+    // http://mt0.google.cn/vt/lyrs=y@198
+    MATileOverlay *overlay = [[MATileOverlay alloc] initWithURLTemplate:@"https://mt0.google.cn/vt/lyrs=m@142&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}"];
+    overlay.minimumZ = 1;
+    overlay.maximumZ = 20;
+    overlay.boundingMapRect = MAMapRectWorld;
+    [mapView addOverlay:overlay];
+}
+
 - (UIView *)view {
   MAMapView *view = [[MAMapView alloc] init];
+    
+    view.delegate = self;
+    
+    [self setupCustomTile:view];
   // 这里viewId加1是为了防止往HEAP里放了nil的key, 把HEAP内原先viewId为0的覆盖掉了, 因为nil实际上就是0
   HEAP[@(_viewId + 1)] = view;
 
@@ -3566,22 +3580,35 @@ typedef void (^Handler)(NSObject <FlutterPluginRegistrar> *, NSDictionary<NSStri
       if (annotationView == nil) {
           annotationView = [[MAPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pointReuseIndentifier];
       }
+//      icon = [self createIcon];
       if (icon != nil) annotationView.image = icon;
       if (draggable != nil) annotationView.draggable = [draggable boolValue];
       if (infoWindowEnabled != nil) annotationView.canShowCallout = [infoWindowEnabled boolValue];
       // 旋转角度
-      if (rotateAngle != nil) {
-          annotationView.transform = CGAffineTransformRotate(CGAffineTransformIdentity, -[rotateAngle doubleValue] / 180.0 * M_PI);
-      }
+//      if (rotateAngle != nil) {
+//          annotationView.transform = CGAffineTransformRotate(CGAffineTransformIdentity, -[rotateAngle doubleValue] / 180.0 * M_PI);
+//      }
       // 锚点
-      if (anchorU != nil && anchorV != nil) {
-          annotationView.layer.anchorPoint = CGPointMake([anchorU doubleValue], [anchorV doubleValue]);
-      }
+//      if (anchorU != nil && anchorV != nil) {
+//          annotationView.layer.anchorPoint = CGPointMake([anchorU doubleValue], [anchorV doubleValue]);
+//      }
       return annotationView;
   }
   ////////////////////////////////////////////////////////////////////////////////
   
   return nil;
+}
+
+- (UIImage *)createIcon {
+    CGRect rect = CGRectMake(0, 0, 100, 100);
+    UIGraphicsBeginImageContextWithOptions(rect.size, false, 0.0);
+    UIColor *color = [UIColor redColor];
+    [color setFill];
+    UIRectFill(rect);
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return [UIImage imageWithCGImage:image.CGImage];
 }
 
 - (void)mapView : (MAMapView*)mapView didAddAnnotationViews: (NSArray*)views
@@ -3831,6 +3858,10 @@ typedef void (^Handler)(NSObject <FlutterPluginRegistrar> *, NSDictionary<NSStri
       [STACK removeAllObjects];
       return polylineRenderer;
   }
+    
+    if ([overlay isKindOfClass:[MATileOverlay class]]) {
+        return [[MATileOverlayRenderer alloc] initWithTileOverlay:overlay];
+    }
 
   // 多边形
   if ([overlay isKindOfClass:[MAPolygon class]])
