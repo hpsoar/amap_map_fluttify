@@ -566,8 +566,6 @@ class AmapController with WidgetsBindingObserver, _Private {
     final lng = option.latLng.longitude;
     return platform(
       android: (pool) async {
-        // 获取地图
-        final map = await _androidController.getMap();
 
         // marker经纬度
         final latLng =
@@ -623,6 +621,9 @@ class AmapController with WidgetsBindingObserver, _Private {
         // 锚点 和ios端统一为默认0.5
         await markerOption.anchor(option.anchorU ?? 0.5, option.anchorV ?? 0.5);
 
+        // 获取地图
+        final map = await _androidController.getMap();
+        
         final marker = await map.addMarker(markerOption);
 
         // 是否允许弹窗
